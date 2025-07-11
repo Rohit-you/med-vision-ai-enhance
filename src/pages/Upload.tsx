@@ -1,17 +1,19 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload as UploadIcon, Image, Zap, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload as UploadIcon, Image, Zap, CheckCircle, AlertCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
 import { useToast } from "@/hooks/use-toast";
+import { enhanceMedicalImage, downloadEnhancedImage } from "@/utils/imageEnhancement";
 
 const Upload = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<any[]>([]);
+  const [currentlyProcessing, setCurrentlyProcessing] = useState<string>("");
   const { toast } = useToast();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -35,39 +37,67 @@ const Upload = () => {
     
     setIsProcessing(true);
     setProgress(0);
+    setResults([]);
+    setCurrentlyProcessing("");
     
-    // Simulate processing
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsProcessing(false);
-          
-          // Simulate results
-          const mockResults = files.map((file, index) => ({
-            id: index,
-            filename: file.name,
-            originalSize: file.size,
-            enhancementScore: Math.random() * 30 + 70, // 70-100%
-            processingTime: Math.random() * 2 + 1, // 1-3 seconds
-            insights: [
-              "Noise reduction: 89%",
-              "Contrast enhancement: 92%",
-              "Edge sharpening: 76%"
-            ]
-          }));
-          
-          setResults(mockResults);
-          toast({
-            title: "Processing complete",
-            description: "All images have been enhanced successfully",
-          });
-          
-          return 100;
-        }
-        return prev + 2;
+    try {
+      const enhancedResults = [];
+      const totalFiles = files.length;
+      
+      for (let i = 0; i < totalFiles; i++) {
+        const file = files[i];
+        setCurrentlyProcessing(file.name);
+        
+        console.log(`Processing file ${i + 1}/${totalFiles}: ${file.name}`);
+        
+        const result = await enhanceMedicalImage(file, (fileProgress) => {
+          // Calculate overall progress
+          const baseProgress = (i / totalFiles) * 100;
+          const currentFileProgress = (fileProgress / totalFiles);
+          setProgress(baseProgress + currentFileProgress);
+        });
+        
+        enhancedResults.push({
+          id: i,
+          filename: file.name,
+          originalSize: file.size,
+          enhancementScore: result.qualityScore,
+          interpretabilityScore: result.interpretabilityScore,
+          processingTime: result.processingTime / 1000, // Convert to seconds
+          insights: result.insights,
+          enhancedImage: result.enhancedImage
+        });
+        
+        console.log(`Successfully processed: ${file.name}`);
+      }
+      
+      setResults(enhancedResults);
+      setProgress(100);
+      setIsProcessing(false);
+      setCurrentlyProcessing("");
+      
+      toast({
+        title: "Processing complete",
+        description: `All ${totalFiles} images have been enhanced successfully`,
       });
-    }, 100);
+      
+    } catch (error) {
+      console.error('Error processing images:', error);
+      setIsProcessing(false);
+      setCurrentlyProcessing("");
+      
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "An error occurred during processing",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownload = (result: any) => {
+    if (result.enhancedImage) {
+      downloadEnhancedImage(result.enhancedImage, result.filename);
+    }
   };
 
   const formatFileSize = (bytes: number) => {
@@ -169,8 +199,13 @@ const Upload = () => {
                   <div className="space-y-4">
                     <Progress value={progress} className="w-full" />
                     <p className="text-sm text-muted-foreground">
-                      Applying CNN enhancement algorithms... {progress}%
+                      Applying CNN enhancement algorithms... {Math.round(progress)}%
                     </p>
+                    {currentlyProcessing && (
+                      <p className="text-xs text-muted-foreground">
+                        Currently processing: {currentlyProcessing}
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -225,7 +260,13 @@ const Upload = () => {
                               ))}
                             </div>
                             
-                            <Button variant="outline" size="sm" className="w-full mt-3">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full mt-3"
+                              onClick={() => handleDownload(result)}
+                            >
+                              <Download className="h-4 w-4 mr-2" />
                               Download Enhanced Image
                             </Button>
                           </div>
