@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Brain, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,14 +11,94 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/dashboard");
+      }
+    };
+    checkUser();
+  }, [navigate]);
+
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        toast({
+          title: "Error signing in",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Welcome back!",
+          description: "You have been signed in successfully.",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+      
+      if (error) {
+        toast({
+          title: "Error creating account",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Account created!",
+          description: "Check your email to verify your account.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,7 +139,7 @@ const Auth = () => {
               </TabsList>
               
               <TabsContent value="signin">
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
@@ -67,6 +149,8 @@ const Auth = () => {
                         type="email"
                         placeholder="doctor@hospital.com"
                         className="pl-10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                       />
                     </div>
@@ -81,6 +165,8 @@ const Auth = () => {
                         type="password"
                         placeholder="••••••••"
                         className="pl-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         required
                       />
                     </div>
@@ -104,7 +190,7 @@ const Auth = () => {
               </TabsContent>
               
               <TabsContent value="signup">
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullname">Full Name</Label>
                     <div className="relative">
@@ -114,6 +200,8 @@ const Auth = () => {
                         type="text"
                         placeholder="Dr. Jane Smith"
                         className="pl-10"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         required
                       />
                     </div>
@@ -128,6 +216,8 @@ const Auth = () => {
                         type="email"
                         placeholder="doctor@hospital.com"
                         className="pl-10"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                       />
                     </div>
@@ -142,6 +232,8 @@ const Auth = () => {
                         type="password"
                         placeholder="••••••••"
                         className="pl-10"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                         required
                       />
                     </div>
