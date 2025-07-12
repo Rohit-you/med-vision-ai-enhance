@@ -66,6 +66,17 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
     
+    // Validate password length
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -87,8 +98,12 @@ const Auth = () => {
       } else {
         toast({
           title: "Account created!",
-          description: "Check your email to verify your account.",
+          description: "Check your email to verify your account, then you can sign in.",
         });
+        // Clear the form
+        setEmail("");
+        setPassword("");
+        setFullName("");
       }
     } catch (error) {
       toast({
@@ -230,13 +245,17 @@ const Auth = () => {
                       <Input
                         id="signup-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="At least 6 characters"
                         className="pl-10"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        minLength={6}
                         required
                       />
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Password must be at least 6 characters long
+                    </p>
                   </div>
                   
                   <Button 
