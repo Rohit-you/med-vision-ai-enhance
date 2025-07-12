@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Brain, Menu, X, User, Upload, BarChart3 } from "lucide-react";
+import { Brain, Menu, X, User, Upload, BarChart3, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, loading, signOut } = useAuth();
 
   const navigation = [
     { name: "Home", href: "/", icon: Brain },
@@ -49,12 +53,39 @@ const Navigation = () => {
                 </Link>
               );
             })}
-            <Button asChild variant="medical" size="sm">
-              <Link to="/auth">
-                <User className="h-4 w-4" />
-                Sign In
-              </Link>
-            </Button>
+            {loading ? (
+              <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            ) : user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                      <AvatarFallback>
+                        {user.email?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuItem disabled>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>{user.email}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="medical" size="sm">
+                <Link to="/auth">
+                  <User className="h-4 w-4" />
+                  Sign In
+                </Link>
+              </Button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -96,12 +127,26 @@ const Navigation = () => {
                   </Link>
                 );
               })}
-              <Button asChild variant="medical" className="w-full mt-4">
-                <Link to="/auth" onClick={() => setIsOpen(false)}>
-                  <User className="h-4 w-4" />
-                  Sign In
-                </Link>
-              </Button>
+              {loading ? (
+                <div className="h-8 w-full rounded bg-muted animate-pulse mt-4" />
+              ) : user ? (
+                <div className="mt-4 space-y-2">
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    {user.email}
+                  </div>
+                  <Button onClick={signOut} variant="outline" className="w-full">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              ) : (
+                <Button asChild variant="medical" className="w-full mt-4">
+                  <Link to="/auth" onClick={() => setIsOpen(false)}>
+                    <User className="h-4 w-4" />
+                    Sign In
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         )}

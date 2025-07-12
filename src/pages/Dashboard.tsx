@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -226,9 +227,11 @@ const Dashboard = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="medical" className="w-full">
-                  <ImageIcon className="h-4 w-4 mr-2" />
-                  Process New Images
+                <Button asChild variant="medical" className="w-full">
+                  <Link to="/upload">
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Process New Images
+                  </Link>
                 </Button>
                 <Button variant="outline" className="w-full">
                   <Download className="h-4 w-4 mr-2" />
