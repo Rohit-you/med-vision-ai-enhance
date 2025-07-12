@@ -39,11 +39,19 @@ const Auth = () => {
       });
       
       if (error) {
-        toast({
-          title: "Error signing in",
-          description: error.message,
-          variant: "destructive",
-        });
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Cannot sign in",
+            description: "Please check your email and verify your account first, or check if your email/password are correct.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error signing in",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Welcome back!",
@@ -98,7 +106,7 @@ const Auth = () => {
       } else {
         toast({
           title: "Account created!",
-          description: "Check your email to verify your account, then you can sign in.",
+          description: "Check your email to verify your account before signing in. If you don't see the email, check your spam folder.",
         });
         // Clear the form
         setEmail("");
