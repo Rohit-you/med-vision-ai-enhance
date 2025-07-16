@@ -30,10 +30,16 @@ git clone <YOUR_GIT_URL>
 cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
-npm i
+npm install
+# OR use yarn
+# yarn install
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
+# OR use yarn  
+# yarn dev
+
+# Note: This project uses npm/yarn, not bun. If you see a bun.lockb file, delete it and use npm/yarn instead.
 ```
 
 **Edit a file directly in GitHub**
