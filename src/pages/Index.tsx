@@ -4,39 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import heroImage from "@/assets/hero-medical-ai.jpg";
-
 const Index = () => {
-  const features = [
-    {
-      icon: Brain,
-      title: "Advanced CNN Architecture",
-      description: "State-of-the-art convolutional neural networks optimized for medical image enhancement and analysis."
-    },
-    {
-      icon: Zap,
-      title: "Real-time Processing",
-      description: "Lightning-fast image enhancement with GPU acceleration for immediate clinical insights."
-    },
-    {
-      icon: Shield,
-      title: "HIPAA Compliant",
-      description: "Enterprise-grade security and privacy protection for all medical data and imaging workflows."
-    },
-    {
-      icon: BarChart3,
-      title: "Advanced Analytics",
-      description: "Comprehensive reporting and analytics to track enhancement quality and diagnostic accuracy."
-    }
-  ];
-
-
-  return (
-    <div className="min-h-screen bg-background">
+  const features = [{
+    icon: Brain,
+    title: "Advanced CNN Architecture",
+    description: "State-of-the-art convolutional neural networks optimized for medical image enhancement and analysis."
+  }, {
+    icon: Zap,
+    title: "Real-time Processing",
+    description: "Lightning-fast image enhancement with GPU acceleration for immediate clinical insights."
+  }, {
+    icon: Shield,
+    title: "HIPAA Compliant",
+    description: "Enterprise-grade security and privacy protection for all medical data and imaging workflows."
+  }, {
+    icon: BarChart3,
+    title: "Advanced Analytics",
+    description: "Comprehensive reporting and analytics to track enhancement quality and diagnostic accuracy."
+  }];
+  return <div className="min-h-screen bg-background">
       <Navigation />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="max-w-7xl px-4 sm:px-6 lg:px-8 py-24 mx-0">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
@@ -72,11 +63,7 @@ const Index = () => {
             
             <div className="relative">
               <div className="aspect-video rounded-2xl overflow-hidden shadow-medical">
-                <img 
-                  src="/lovable-uploads/d3eaa3e1-55cc-4081-a258-01956b7e57c3.png" 
-                  alt="Medical Institution Building" 
-                  className="w-full h-full object-cover"
-                />
+                <img src="/lovable-uploads/d3eaa3e1-55cc-4081-a258-01956b7e57c3.png" alt="Medical Institution Building" className="w-full h-full object-cover" />
               </div>
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary-glow/20 rounded-full animate-pulse-glow"></div>
             </div>
@@ -100,9 +87,8 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {features.map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={index} className="shadow-medical hover:shadow-glow transition-all duration-300">
+            const Icon = feature.icon;
+            return <Card key={index} className="shadow-medical hover:shadow-glow transition-all duration-300">
                   <CardHeader>
                     <div className="flex items-center space-x-4">
                       <div className="p-3 bg-gradient-primary rounded-lg">
@@ -116,9 +102,8 @@ const Index = () => {
                       {feature.description}
                     </CardDescription>
                   </CardContent>
-                </Card>
-              );
-            })}
+                </Card>;
+          })}
           </div>
         </div>
       </section>
@@ -147,8 +132,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
