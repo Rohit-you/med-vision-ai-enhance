@@ -73,8 +73,8 @@ const Index = () => {
             <div className="relative">
               <div className="aspect-video rounded-2xl overflow-hidden shadow-medical">
                 <img 
-                  src={heroImage} 
-                  alt="Medical AI Enhancement Visualization" 
+                  src="/lovable-uploads/d3eaa3e1-55cc-4081-a258-01956b7e57c3.png" 
+                  alt="Medical Institution Building" 
                   className="w-full h-full object-cover"
                 />
               </div>
