@@ -43,18 +43,39 @@ export const loadImage = (file: File): Promise<HTMLImageElement> => {
   });
 };
 
-export const enhanceContrast = (canvas: HTMLCanvasElement, factor: number = 1.3): void => {
+export const enhanceContrast = (canvas: HTMLCanvasElement, factor: number = 1.5): void => {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
 
+  // Calculate histogram for adaptive contrast enhancement
+  const histogram = new Array(256).fill(0);
   for (let i = 0; i < data.length; i += 4) {
-    // Apply contrast enhancement to RGB channels
-    data[i] = Math.max(0, Math.min(255, (data[i] - 128) * factor + 128));     // Red
-    data[i + 1] = Math.max(0, Math.min(255, (data[i + 1] - 128) * factor + 128)); // Green
-    data[i + 2] = Math.max(0, Math.min(255, (data[i + 2] - 128) * factor + 128)); // Blue
+    const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+    histogram[gray]++;
+  }
+
+  // Calculate cumulative distribution
+  const cdf = new Array(256);
+  cdf[0] = histogram[0];
+  for (let i = 1; i < 256; i++) {
+    cdf[i] = cdf[i - 1] + histogram[i];
+  }
+
+  // Normalize CDF
+  const totalPixels = canvas.width * canvas.height;
+  for (let i = 0; i < 256; i++) {
+    cdf[i] = (cdf[i] / totalPixels) * 255;
+  }
+
+  // Apply adaptive contrast with histogram equalization
+  for (let i = 0; i < data.length; i += 4) {
+    // Enhanced contrast formula with histogram equalization
+    data[i] = Math.max(0, Math.min(255, cdf[data[i]] * factor * 0.7 + data[i] * 0.3));     // Red
+    data[i + 1] = Math.max(0, Math.min(255, cdf[data[i + 1]] * factor * 0.7 + data[i + 1] * 0.3)); // Green
+    data[i + 2] = Math.max(0, Math.min(255, cdf[data[i + 2]] * factor * 0.7 + data[i + 2] * 0.3)); // Blue
   }
 
   ctx.putImageData(imageData, 0, 0);
@@ -72,13 +93,14 @@ export const sharpenImage = (canvas: HTMLCanvasElement): void => {
   // Create a copy of the original data
   const original = new Uint8ClampedArray(data);
   
-  // Sharpening kernel
+  // Advanced unsharp masking kernel for medical images
   const kernel = [
-    0, -1, 0,
-    -1, 5, -1,
-    0, -1, 0
+    -0.5, -1, -0.5,
+    -1, 7, -1,
+    -0.5, -1, -0.5
   ];
 
+  // Apply convolution with edge handling
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       for (let c = 0; c < 3; c++) { // RGB channels
@@ -92,7 +114,9 @@ export const sharpenImage = (canvas: HTMLCanvasElement): void => {
         }
         
         const idx = (y * width + x) * 4 + c;
-        data[idx] = Math.max(0, Math.min(255, sum));
+        // Blend original with sharpened for more natural results
+        const sharpened = Math.max(0, Math.min(255, sum));
+        data[idx] = Math.round(original[idx] * 0.3 + sharpened * 0.7);
       }
     }
   }
@@ -109,29 +133,45 @@ export const removeNoise = (canvas: HTMLCanvasElement): void => {
   const width = canvas.width;
   const height = canvas.height;
   
-  // Create a copy for median filtering
+  // Create a copy for bilateral filtering (edge-preserving noise reduction)
   const original = new Uint8ClampedArray(data);
   
-  // Simple median filter for noise reduction
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
+  // Bilateral filter parameters
+  const spatialSigma = 2;
+  const intensitySigma = 50;
+  const kernelSize = 5;
+  const halfKernel = Math.floor(kernelSize / 2);
+  
+  // Apply bilateral filter for edge-preserving denoising
+  for (let y = halfKernel; y < height - halfKernel; y++) {
+    for (let x = halfKernel; x < width - halfKernel; x++) {
       for (let c = 0; c < 3; c++) { // RGB channels
-        const values: number[] = [];
+        let totalWeight = 0;
+        let filteredValue = 0;
+        const centerIdx = (y * width + x) * 4 + c;
+        const centerIntensity = original[centerIdx];
         
-        // Collect 3x3 neighborhood values
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
+        // Process kernel neighborhood
+        for (let ky = -halfKernel; ky <= halfKernel; ky++) {
+          for (let kx = -halfKernel; kx <= halfKernel; kx++) {
             const idx = ((y + ky) * width + (x + kx)) * 4 + c;
-            values.push(original[idx]);
+            const intensity = original[idx];
+            
+            // Spatial weight (distance)
+            const spatialDistance = Math.sqrt(kx * kx + ky * ky);
+            const spatialWeight = Math.exp(-(spatialDistance * spatialDistance) / (2 * spatialSigma * spatialSigma));
+            
+            // Intensity weight (similarity)
+            const intensityDistance = Math.abs(intensity - centerIntensity);
+            const intensityWeight = Math.exp(-(intensityDistance * intensityDistance) / (2 * intensitySigma * intensitySigma));
+            
+            const weight = spatialWeight * intensityWeight;
+            totalWeight += weight;
+            filteredValue += intensity * weight;
           }
         }
         
-        // Sort and take median
-        values.sort((a, b) => a - b);
-        const median = values[Math.floor(values.length / 2)];
-        
-        const idx = (y * width + x) * 4 + c;
-        data[idx] = median;
+        data[centerIdx] = Math.round(filteredValue / totalWeight);
       }
     }
   }
@@ -166,7 +206,7 @@ export const enhanceMedicalImage = async (file: File, onProgress?: (progress: nu
     
     // Apply contrast enhancement
     console.log('Enhancing contrast...');
-    enhanceContrast(canvas, 1.4);
+    enhanceContrast(canvas, 1.6);
     onProgress?.(70);
     
     // Apply sharpening
