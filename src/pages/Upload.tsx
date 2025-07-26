@@ -66,6 +66,7 @@ const Upload = () => {
           processingTime: result.processingTime / 1000, // Convert to seconds
           insights: result.insights,
           enhancedImage: result.enhancedImage,
+          enhancedImageUrl: URL.createObjectURL(result.enhancedImage),
           originalImage: URL.createObjectURL(file)
         });
         
@@ -261,7 +262,7 @@ const Upload = () => {
                                 <h4 className="text-sm font-medium text-center">Enhanced</h4>
                                 <div className="aspect-square rounded-lg overflow-hidden border border-primary bg-secondary">
                                   <img 
-                                    src={result.enhancedImage} 
+                                    src={result.enhancedImageUrl} 
                                     alt={`Enhanced ${result.filename}`}
                                     className="w-full h-full object-cover"
                                   />
