@@ -65,7 +65,8 @@ const Upload = () => {
           interpretabilityScore: result.interpretabilityScore,
           processingTime: result.processingTime / 1000, // Convert to seconds
           insights: result.insights,
-          enhancedImage: result.enhancedImage
+          enhancedImage: result.enhancedImage,
+          originalImage: URL.createObjectURL(file)
         });
         
         console.log(`Successfully processed: ${file.name}`);
@@ -233,22 +234,39 @@ const Upload = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {results.map((result) => (
                       <Card key={result.id} className="border border-border">
                         <CardHeader className="pb-3">
                           <CardTitle className="text-lg">{result.filename}</CardTitle>
                           <CardDescription>
-                            Processing time: {result.processingTime.toFixed(1)}s
+                            Processing time: {result.processingTime.toFixed(1)}s | Enhancement Score: {result.enhancementScore.toFixed(1)}%
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm font-medium">Enhancement Score:</span>
-                              <span className="text-sm font-bold text-primary">
-                                {result.enhancementScore.toFixed(1)}%
-                              </span>
+                          <div className="space-y-4">
+                            {/* Side-by-side image comparison */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-center">Original</h4>
+                                <div className="aspect-square rounded-lg overflow-hidden border border-border bg-secondary">
+                                  <img 
+                                    src={result.originalImage} 
+                                    alt={`Original ${result.filename}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium text-center">Enhanced</h4>
+                                <div className="aspect-square rounded-lg overflow-hidden border border-primary bg-secondary">
+                                  <img 
+                                    src={result.enhancedImage} 
+                                    alt={`Enhanced ${result.filename}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              </div>
                             </div>
                             
                             <div className="space-y-2">
